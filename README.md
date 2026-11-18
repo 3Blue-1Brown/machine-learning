@@ -1,188 +1,126 @@
 # HỆ THỐNG HỖ TRỢ DỰ ĐOÁN NGUY CƠ TIỂU ĐƯỜNG (DIAPREDICT ML)
+
 > **Đồ án môn học:** Học Máy (Machine Learning)  
-> **Bộ dữ liệu:** Pima Indians Diabetes Dataset (UCI Machine Learning Repository / Kaggle)  
-> **Công nghệ:** Python 3.14, Scikit-learn, Pandas, NumPy, Matplotlib, Seaborn, Flask, HTML5, CSS3, JavaScript, Joblib  
+> **Bộ dữ liệu:** Pima Indians Diabetes Dataset (Kaggle / UCI Machine Learning Repository)  
+> **Công nghệ:** Python 3.14, Scikit-learn, Pandas, NumPy, Matplotlib, Seaborn, Flask, Joblib  
+> **Hiệu năng mô hình tối ưu (Decision Tree):** **Accuracy: 81.82%** | **Recall: 79.63%** | **F1-Score: 75.44%** | **ROC-AUC: 84.01%**
 
 ---
 
-## 1. Giới thiệu đề tài
-Tiểu đường (Đái tháo đường) là một trong những bệnh mạn tính không lây phổ biến nhất toàn cầu, gây ra nhiều biến chứng nghiêm trọng về tim mạch, suy thận và thị lực nếu không được phát hiện kịp thời.
+## 1. GIỚI THIỆU ĐỀ TÀI
+Tiểu đường (Đái tháo đường) là một trong những bệnh mạn tính nguy hiểm hàng đầu, gây ra nhiều biến chứng nghiêm trọng về tim mạch, suy thận và thị lực nếu không được phát hiện kịp thời.
 
-Đồ án này xây dựng một giải pháp Machine Learning hoàn chỉnh hỗ trợ sàng lọc sớm nguy cơ mắc bệnh tiểu đường dựa trên **3 chỉ số lâm sàng cơ bản và phổ biến nhất**:
+Đồ án này nghiên cứu và trực tiếp phát triển một giải pháp Machine Learning hoàn chỉnh hỗ trợ sàng lọc sớm nguy cơ mắc bệnh tiểu đường dựa trên **3 chỉ số lâm sàng cơ bản và phổ biến nhất**:
 1. **Glucose (Lượng đường huyết trong huyết tương - mg/dL)**
 2. **BMI (Chỉ số khối cơ thể - $kg/m^2$)**
 3. **Age (Độ tuổi - Năm)**
 
-Hệ thống cung cấp một Website y tế hiện đại cho phép người dùng tự kiểm tra sức khỏe, nhận nhãn dự đoán nguy cơ (0: Thấp / 1: Cao), xem thước đo xác suất phần trăm tin cậy của mô hình, đọc phân tích chi tiết và nhận lời khuyên y tế tham khảo.
-
-> ⚠️ **LƯU Ý Y TẾ QUAN TRỌNG:**  
-> Đây là sản phẩm học tập và nghiên cứu thuật toán, **tuyệt đối không thay thế chẩn đoán chuyên môn, xét nghiệm sinh hóa máu hoặc phác đồ điều trị của bác sĩ chuyên khoa**.
+Đồng thời, đồ án tiến hành đối sánh khoa học giữa **Kịch bản A (3 đặc trưng cơ bản)** và **Kịch bản B (Toàn bộ 8 đặc trưng)** để làm rõ vai trò của kỹ thuật lựa chọn đặc trưng (Feature Selection).
 
 ---
 
-## 2. Cấu trúc thư mục đồ án
+## 2. CẤU TRÚC THƯ MỤC DỰ ÁN
 ```text
 diabetes_prediction/
 │
-├── app.py                     # Máy chủ Flask Backend & RESTful API
-├── train_model.py             # Script huấn luyện, đánh giá & đóng gói Pipeline
-├── eda_and_preprocess.py      # Script tự động phân tích dữ liệu & xuất biểu đồ
-├── test_app.py                # Test Suite kiểm thử 8 kịch bản tự động
-├── requirements.txt           # Danh mục thư viện phụ thuộc
-├── README.md                  # Hướng dẫn chi tiết cài đặt và sử dụng
-├── report.md                  # Báo cáo học thuật toàn diện đồ án
-├── presentation.md            # Nội dung slide thuyết trình & Bộ câu hỏi vấn đáp Q&A
-│
-├── data/
-│   └── diabetes.csv           # Dữ liệu gốc chuẩn Pima Indians Diabetes (768 dòng)
+├── dataset/
+│   └── diabetes.csv           # Dữ liệu chuẩn Pima Indians Diabetes (768 dòng, 9 cột)
 │
 ├── models/
-│   ├── diabetes_model.pkl     # Pipeline hoàn chỉnh (Imputer + Scaler + DecisionTree)
-│   └── metrics.json           # Dữ liệu đo đạc thực tế của 3 mô hình & siêu tham số
+│   ├── diabetes_model.pkl     # Pipeline tối ưu đã lưu (Imputer + Scaler + DecisionTree)
+│   └── metrics.json           # Thông số đo đạc thực tế của 4 mô hình & siêu tham số
+│
+├── notebooks/
+│   └── diabetes_analysis.ipynb # Jupyter Notebook phân tích EDA và huấn luyện từng bước
 │
 ├── static/
-│   ├── css/
-│   │   └── style.css          # CSS giao diện y tế hiện đại (Blue & White, Responsive)
-│   ├── js/
-│   │   └── script.js          # JS validation form, tính nhanh BMI & hiệu ứng UX
-│   └── images/                # 6 Biểu đồ trực quan hóa y tế chất lượng cao
+│   ├── css/style.css          # Giao diện y tế hiện đại (Responsive, Blue & White)
+│   ├── js/script.js           # Form validation, tính nhanh BMI & hiệu ứng UX
+│   └── images/                # Biểu đồ trực quan hóa y tế chất lượng cao
 │       ├── outcome_distribution.png
 │       ├── feature_distributions.png
 │       ├── correlation_matrix.png
-│       ├── feature_boxplots.png
-│       ├── model_comparison.png
-│       └── confusion_matrix_all.png
+│       ├── confusion_matrix_all.png
+│       ├── roc_curves.png
+│       └── model_comparison.png
 │
-├── templates/
-│   ├── base.html              # Layout chung: Navbar, Banner cảnh báo y tế, Footer
-│   ├── index.html             # Trang chủ: Giới thiệu, quy trình 3 bước, ý nghĩa chỉ số
-│   ├── predict.html           # Trang nhập liệu: Form chuẩn hóa kèm Bộ tính nhanh BMI
-│   ├── result.html            # Trang kết quả: Nhãn dự đoán, xác suất %, phân tích & in
-│   └── about.html             # Trang báo cáo: Bảng so sánh 3 mô hình, biểu đồ & tài liệu API
+├── templates/                 # Giao diện Web Flask (HTML5 & Jinja2)
+│   ├── base.html
+│   ├── index.html
+│   ├── predict.html
+│   ├── result.html
+│   └── about.html
 │
-└── notebooks/
-    └── analysis.ipynb         # Jupyter Notebook phân tích EDA chi tiết từng bước
+├── app.py                     # Máy chủ Flask Backend & RESTful API (/api/predict)
+├── predict.py                 # Chương trình dự đoán bệnh nhân mới qua dòng lệnh CLI
+├── train_model.py             # Script huấn luyện tự động
+├── step8_evaluation.py        # Đánh giá 4 mô hình, vẽ ROC Curve & Confusion Matrix
+├── step9_hyperparameter_tuning.py # Tối ưu hóa siêu tham số (GridSearchCV & 5-Fold CV)
+├── step10_save_best_model.py  # Đóng gói mô hình tốt nhất vào models/
+├── requirements.txt           # Danh mục thư viện phụ thuộc
+├── report.md                  # Báo cáo học thuật toàn diện đồ án
+├── presentation.md            # Slide thuyết trình & Bộ câu hỏi vấn đáp Q&A bảo vệ đồ án
+└── README.md
 ```
 
 ---
 
-## 3. Cài đặt môi trường & Thư viện
-
-### Bước 1: Chuẩn bị môi trường Python
-Yêu cầu Python 3.9 trở lên (đã được kiểm thử tương thích hoàn hảo trên Python 3.14 Windows 64-bit).
+## 3. CÀI ĐẶT MÔI TRƯỜNG & THƯ VIỆN
 
 ```bash
-# Di chuyển vào thư mục dự án
+# 1. Di chuyển vào thư mục dự án
 cd diabetes_prediction
 
-# (Tùy chọn) Khởi tạo môi trường ảo venv
-python -m venv venv
-# Kích hoạt trên Windows:
-.\venv\Scripts\activate
-# Kích hoạt trên macOS/Linux:
-source venv/bin/activate
-```
-
-### Bước 2: Cài đặt các thư viện cần thiết
-```bash
+# 2. Cài đặt các thư viện cần thiết
 pip install -r requirements.txt
 ```
 
 ---
 
-## 4. Hướng dẫn thực thi từng giai đoạn
+## 4. HƯỚNG DẪN THỰC THI DỰ ÁN
 
-### 4.1. Phân tích dữ liệu thăm dò (EDA) & Xuất biểu đồ
-Lệnh này sẽ phân tích 768 dòng dữ liệu, phát hiện giá trị 0 ẩn ở Glucose và BMI, tạo ra 4 biểu đồ phân tích lưu vào `static/images/`:
+### 4.1. Huấn luyện mô hình & Tối ưu hóa siêu tham số (GridSearchCV)
+Lệnh này sẽ thực hiện tìm kiếm siêu tham số tối ưu qua 5-Fold Stratified Cross-Validation:
 ```bash
-python eda_and_preprocess.py
+python step9_hyperparameter_tuning.py
 ```
 
-### 4.2. Huấn luyện 3 mô hình & Đóng gói Pipeline tối ưu
-Lệnh này sẽ huấn luyện 3 thuật toán (**Logistic Regression, Decision Tree, Random Forest**), đánh giá trên 154 mẫu tập Test (80/20 có `stratify=y`), tạo biểu đồ so sánh mô hình, ma trận nhầm lẫn và lưu Pipeline tốt nhất vào `models/diabetes_model.pkl`:
+### 4.2. Đóng gói mô hình tối ưu nhất vào `models/diabetes_model.pkl`
 ```bash
-python train_model.py
+python step10_save_best_model.py
 ```
 
-### 4.3. Kiểm thử tự động hệ thống Flask
-Chạy toàn bộ 8 bài test tích hợp (Trang chủ, Form, Phân loại 0/1, Lỗi validation, API JSON):
-```bash
-python test_app.py
-```
+### 4.3. Thử nghiệm dự đoán bệnh nhân mới bằng dòng lệnh CLI
+- **Cách 1: Nhập tham số trực tiếp:**
+  ```bash
+  python predict.py --glucose 165 --bmi 34.0 --age 52
+  ```
+- **Cách 2: Chế độ tương tác nhập tay:**
+  ```bash
+  python predict.py
+  ```
 
-### 4.4. Khởi chạy ứng dụng Web Flask
+### 4.4. Khởi chạy Ứng dụng Web Flask
 ```bash
 python app.py
 ```
-Sau đó mở trình duyệt web bất kỳ và truy cập địa chỉ:  
-👉 **`http://127.0.0.1:5000/`**
+Mở trình duyệt web bất kỳ và truy cập: 👉 **`http://127.0.0.1:5000/`**
 
 ---
 
-## 5. Kết quả thực nghiệm đo đạc thực tế (Test Set 154 mẫu)
+## 5. KẾT QUẢ THỰC NGHIỆM ĐO ĐẠC THỰC TẾ (TEST SET 154 MẪU)
 
-| Thuật toán | Accuracy (%) | Precision (%) | Recall (%) | F1-Score (%) | ROC-AUC (%) |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **Logistic Regression** | 70.78% | 59.57% | 51.85% | 55.45% | 78.63% |
-| **Decision Tree (Tối ưu)** | **79.87%** | **70.91%** | **72.22%** | **71.56%** | **81.44%** |
-| **Random Forest (100 cây)** | 75.97% | 67.35% | 61.11% | 64.08% | **81.46%** |
+| Thuật toán | Accuracy (%) | Precision (%) | Recall (%) | F1-Score (%) | ROC-AUC (%) | Xếp hạng |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Decision Tree (Tối ưu)** | **81.82%** | **71.67%** | **79.63%** | **75.44%** | **84.01%** | 🏆 **Mô hình chọn** |
+| **Random Forest (100 cây)** | 75.97% | 67.35% | 61.11% | 64.08% | 81.46% | Hạng 2 |
+| **Support Vector Machine (SVM)** | 72.73% | 62.00% | 57.41% | 59.62% | 78.03% | Hạng 3 |
+| **Logistic Regression** | 72.73% | 62.00% | 57.41% | 59.62% | 78.76% | Hạng 4 |
 
-> 🏆 **Quyết định lựa chọn mô hình:**  
-> **Decision Tree** được lựa chọn làm mô hình triển khai chính thức bởi vì mô hình đạt **Recall cao nhất (72.22%)** và **F1-Score cao nhất (71.56%)**, giúp hạn chế tối đa việc bỏ sót người có nguy cơ mắc bệnh (chỉ 15 ca False Negative trên 54 ca dương tính).
-
----
-
-## 6. Tài liệu RESTful API Backend
-
-### API 1: Dự đoán nguy cơ tiểu đường
-- **Endpoint:** `POST /api/predict`
-- **Headers:** `Content-Type: application/json`
-- **Request Body mẫu:**
-  ```json
-  {
-    "glucose": 145.0,
-    "bmi": 28.5,
-    "age": 42
-  }
-  ```
-- **Response mẫu (HTTP 200 OK):**
-  ```json
-  {
-    "status": "success",
-    "input": {
-      "glucose": 145.0,
-      "bmi": 28.5,
-      "age": 42.0
-    },
-    "prediction": 1,
-    "label": "Nguy cơ tiểu đường (Dương tính)",
-    "probabilities": {
-      "negative_class_0_pct": 27.5,
-      "positive_class_1_pct": 72.5
-    },
-    "confidence_score_pct": 72.5,
-    "interpretations": [...],
-    "recommendations": [...],
-    "disclaimer": "Kết quả từ hệ thống chỉ mang tính chất tham khảo học tập, không thay thế chẩn đoán y khoa từ bác sĩ."
-  }
-  ```
-
-### API 2: Lấy dữ liệu đánh giá 3 mô hình
-- **Endpoint:** `GET /api/metrics`
-- **Response:** Trả về toàn bộ chỉ số đánh giá thực tế và siêu tham số của 3 mô hình từ `metrics.json`.
+> 🏆 **Lý do lựa chọn mô hình Decision Tree:**  
+> Trong sàng lọc y tế, **Recall (Độ nhạy)** là tiêu chí được ưu tiên số 1 nhằm tránh bỏ sót bệnh nhân (False Negative). **Decision Tree** đạt **Recall 79.63%** (phát hiện 43/54 ca bệnh), đồng thời giữ **Accuracy cao nhất (81.82%)** và tính giải thích minh bạch cao (Explainable AI).
 
 ---
 
-## 7. Các điểm nổi bật về mặt kỹ thuật
-1. **Kiến trúc Pipeline khép kín:** Đóng gói `SimpleImputer(strategy='median')` + `StandardScaler()` + Thuật toán phân loại vào đối tượng Pipeline của Scikit-learn, giúp quá trình dự đoán trên Web hoàn toàn đồng bộ với môi trường huấn luyện.
-2. **Phòng chống Data Leakage triệt để:** Tất cả các tham số thống kê (trung vị, mean, std) được học nghiêm ngặt **chỉ trên tập Train (80%)** sau khi chia bằng `train_test_split(stratify=y)`.
-3. **Bộ tính nhanh BMI thông minh:** Cho phép người dùng nhập trực tiếp chiều cao và cân nặng để tự động tính toán và điền chỉ số BMI mà không cần tính toán thủ công.
-4. **Hiệu năng cao:** Mô hình chỉ nạp 1 lần duy nhất vào bộ nhớ RAM khi khởi động server, thời gian phản hồi dự đoán dưới 15ms.
-
----
-
-## 8. Tác giả & Thông tin đồ án
-- **Đồ án môn học:** Học Máy (Machine Learning)
-- **Sinh viên thực hiện:** Sinh viên Công nghệ Thông tin
-- **Giảng viên hướng dẫn:** Bộ môn Khoa học Dữ liệu / Trí tuệ Nhân tạo
-- **Năm thực hiện:** 2026
+## 6. TUYÊN BỐ MIỄN TRỪ TRÁCH NHIỆM Y KHOA
+Dự án được xây dựng trong khuôn khổ đồ án môn học **Học Máy (Machine Learning)** nhằm mục đích học tập thuật toán và minh họa công nghệ, **tuyệt đối không có giá trị thay thế chẩn đoán chuyên môn, xét nghiệm máu hoặc phác đồ điều trị của bác sĩ chuyên khoa**.
